@@ -1,6 +1,7 @@
 
 ############### README ################
 # For combining and merging grades to an OWL uploadable zip file
+# author:  0xMartian
 #
 # Instructions for use:
 #   1. Each marker should download the folder with attached feedback comments text file
