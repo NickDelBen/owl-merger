@@ -5,7 +5,7 @@ A simple script that allows different graders of the same assignment merge their
 
 Preparing
 ------
-**Each grader should bulk download the submissions with comments file from owl.
+**Each grader should bulk download the submissions with comments file from owl.**
  * For each question you grade add a line to that students comments.txt file with the following format:
  * `Q<q#>: x/y comment`
  * An example comments.txt could look like this:
@@ -14,12 +14,13 @@ Preparing
 	Q1(b): 10/10 
 	Q2: 0/5 Not sure what you were doing here
 	```
- * Once everyone is finished marking all the differnt folders should be collected
+ * Once everyone is finished marking all the different folders should be collected
  * The person collecting should download the `grades.csv` via bulk download for the assignment on OWL
 
 Usage
 ------
-**Using the script is simple just call it pointing to the collected files
+**Using the script is simple just call it pointing to the collected files**
+
 `# merger.py <mark_csv_file> <output_zip_path> <comment_folders>`
  * Parameters:
 	```
@@ -36,7 +37,7 @@ Usage
 
 Submitting to OWL
 ------
-**This will generate a zip file which should be uploaded to owl via the bulk upload option
+**This will generate a zip file which should be uploaded to owl via the bulk upload option**
  * Make sure you have the following items selected when you upload to owl
  * Grade file (CSV)
  * Feedback comments
