@@ -29,24 +29,22 @@ import shutil
 import re
 
 assignment_title_extractor = re.compile(r"^\s*\"(.*?)\".*$")
-name_extractor = re.compile(r"^\s*(.*?)\((.*?)\)\s*$")
+name_extractor = re.compile(r"^\s*(.*)\((.*?)\)\s*$")
 grade_extractor = re.compile(r"^\s*Q(.*?)\s*:\s*([\d\.]*)/([\d\.]*)\s*(.*)$")
 
-# Combines comments from all markers of a student to one item
-def combine_comments (student_directory, grade_folders):
+# Extract the comments from a specific comments file
+def extract_comments (dir_path):
 	answers = {}
-	# Get the grades for this student by each marker
-	for grade_folder in grade_folders:
-		# Open the comments file for this student by the current marker
-		comment_path = os.path.join(grade_folder, student_directory, "comments.txt")
-		with open(comment_path, "r") as comments_file:
-			for comments_line in comments_file:
-				# Parse this comment in the comments file
-				parsed_comment = grade_extractor.match(comments_line.strip()).groups()
-				answers[parsed_comment[0]] = {
-					"grade": [float(parsed_comment[1]), float(parsed_comment[2])],
-					"comment": parsed_comment[3]
-				}
+	# Build full path to the comments file
+	comment_path = os.path.join(dir_path, "comments.txt")
+	with open(comment_path, "r") as comments_file:
+		for comments_line in comments_file:
+			# Parse the comments line
+			parsed_comment = grade_extractor.match(comments_line.strip()).groups()
+			answers[parsed_comment[0]] = {
+				"grade": [float(parsed_comment[1]), float(parsed_comment[2])],
+				"comment": parsed_comment[3]
+			}
 	return answers
 
 
@@ -63,17 +61,38 @@ def analyze_comments (student):
 
 
 # Merges all grades for all students
-def merge_grades (grade_folders):
+def merge_grades (grade_file, grade_folders):
 
-	# Using one of the merge target folders as reference start merging all the grades
+	# Using the grade csv as reference create an empty set for all the students
+	grade_file_start = grade_file.tell()
+	# Skip the headers of the csv file
+	for _ in xrange(3):
+		grade_file.readline()
+	csvreader = csv.reader(grade_file, delimiter=',', quotechar='"')
 	students = {}
-	for student_name in os.listdir(grade_folders[0]):
-		if os.path.isdir(os.path.join(grade_folders[0], student_name)):
-			parsed_name = name_extractor.match(student_name).groups()
-			students[parsed_name[1]] = {
-				"folder": student_name,
-				"comments": combine_comments(student_name, grade_folders)
-			}
+	for row in csvreader:
+		students[row[0]] = {
+			"folder": "",
+			"comments": {}
+		}
+	# Seek to start of grades csv
+	grade_file.seek(grade_file_start)
+
+	# For each marker that needs their grades combined
+	for grade_folder in grade_folders:
+		# Iterate over all of the students that were marked by this marker
+		for student_folder in os.listdir(grade_folder):
+			# Check if this student had content marked
+			full_path = os.path.join(grade_folder, student_folder)
+			if os.path.isdir(full_path):
+				parsed_name = name_extractor.match(student_folder).groups()
+				# Ensure the student was found in the grades folder
+				if parsed_name[1] not in students:
+					continue
+				# Store the path to this students folder
+				students[parsed_name[1]]["folder"] = student_folder
+				for key, val in extract_comments(full_path).iteritems():
+					students[parsed_name[1]]["comments"][key] = val
 
 	# Analyze each student and combine their comments and grade
 	for student_id in students:
@@ -84,7 +103,7 @@ def merge_grades (grade_folders):
 	return students
 
 
-def create_archive (grade_file, output_path, merged_grades):
+def create_archive (grade_file, output_path, merged_grades, normalize=False):
 	# Create a reandom temporary folder for our marking
 	folder_name = ''.join(random.choice('0123456789ABCDEF') for _ in range(32))
 	folder_path = os.path.abspath(folder_name)
@@ -119,7 +138,10 @@ def create_archive (grade_file, output_path, merged_grades):
 			# Copy student info over from grades csv but input the new grade
 			dat = merged_grades[row[0]]
 			new_row = row
-			new_row[4] = "{0:.1f}".format(100.0 * dat["final_grade"][0] / dat["final_grade"][1])
+			if normalize:
+				new_row[4] = "{0:.1f}".format(100.0 * dat["final_grade"][0] / dat["final_grade"][1])
+			else:
+				new_row[4] = "{0:.1f}".format(dat["final_grade"][0])
 			csvwriter.writerow(new_row)
 			# Create the comments file and containing folder for this student
 			student_folder_path = os.path.abspath(os.path.join(assignment_folder, dat["folder"]))
@@ -165,10 +187,12 @@ if __name__ == "__main__":
 		if not os.path.isdir(path):
 			print("'{0}' is not a valid directory".format(sys.argv[idx + 3]))
 			exit(1)
-	# Preform the merge operation
-	students = merge_grades(comment_folders)
-	# Compile the merged grades to a zip that can be uploaded to OWL
+	
+	
 	with open(mark_file, "r") as grades_in:
+		# Preform the merge operation
+		students = merge_grades(grades_in, comment_folders)
+		# Compile the merged grades to a zip that can be uploaded to OWL
 		zip_path, no_submission = create_archive (grades_in, zip_folder_fixed, students)
 		print("Compiled zip archive to be uploaded to OWL saved to:\n    {0}".format(zip_path))
 	exit(0)
