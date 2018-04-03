@@ -21,7 +21,7 @@ Usage
 ------
 **Using the script is simple just call it pointing to the collected files**
 
-`# merger.py <mark_csv_file> <output_zip_path> <comment_folders>`
+`# python merger.py <mark_csv_file> <output_zip_path> <comment_folders>`
  * Parameters:
 	```
 	<mark_csv_file>   CSV Grade File download from OWL
@@ -30,8 +30,8 @@ Usage
 	```
  * A couple examples
 	```
-	merger.py grades.csv output.zip asn1_nick asn1_andy ../yiwei_a2
-	merger.py ~/Downloads/grades.csv output.zip asn1_nick asn1_saby
+	python merger.py grades.csv output.zip asn1_nick asn1_andy ../yiwei_a2
+	python merger.py ~/Downloads/grades.csv output.zip asn1_nick asn1_saby
 	```
 
 
