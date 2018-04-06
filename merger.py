@@ -5,7 +5,6 @@
 #
 # Instructions for use:
 #   1. Each marker should download the folder with attached feedback comments text file
-#         Do not include students without submissions!
 #   2. For each question marked a line in comments.txt file in the students folder should be created:
 #         Q1(a): 17/20 Missing details on the description
 #         Q1(b): 10/10 
@@ -68,9 +67,8 @@ def merge_grades (grade_file, grade_folders):
 	# Skip the headers of the csv file
 	for _ in xrange(3):
 		grade_file.readline()
-	csvreader = csv.reader(grade_file, delimiter=',', quotechar='"')
 	students = {}
-	for row in csvreader:
+	for row in csv.reader(grade_file, delimiter=',', quotechar='"'):
 		students[row[0]] = {
 			"folder": "",
 			"comments": {}
@@ -105,7 +103,12 @@ def merge_grades (grade_file, grade_folders):
 
 def create_archive (grade_file, output_path, merged_grades, normalize=False):
 	# Create a reandom temporary folder for our marking
-	folder_name = ''.join(random.choice('0123456789ABCDEF') for _ in range(32))
+	while True:
+		folder_name = ''.join(random.choice('0123456789ABCDEF') for _ in range(32))
+		# Ensure our folder does not already exist
+		if not os.path.isdir(folder_name):
+			break
+	
 	folder_path = os.path.abspath(folder_name)
 	os.makedirs(folder_path)
 
@@ -187,8 +190,6 @@ if __name__ == "__main__":
 		if not os.path.isdir(path):
 			print("'{0}' is not a valid directory".format(sys.argv[idx + 3]))
 			exit(1)
-	
-	
 	with open(mark_file, "r") as grades_in:
 		# Preform the merge operation
 		students = merge_grades(grades_in, comment_folders)
