@@ -104,7 +104,7 @@ def merge_grades (grade_file, grade_folders):
 def create_archive (grade_file, output_path, merged_grades, normalize=False):
 	# Create a reandom temporary folder for our marking
 	while True:
-		folder_name = ''.join(random.choice('0123456789ABCDEF') for _ in range(32))
+		folder_name = ''.join(random.choice('0123456789ABCDEF') for _ in xrange(32))
 		# Ensure our folder does not already exist
 		if not os.path.isdir(folder_name):
 			break
@@ -171,28 +171,24 @@ if __name__ == "__main__":
 		print("Inproper usage.\n    merger.py <mark_csv_file> <output_zip_path> <comment_folders>")
 		print("Example:\n    merger.py grades.csv to_upload.zip asn1_nick asn1_saby")
 		exit(1)
-	# First arg is folder with mark list
-	mark_file = os.path.abspath(sys.argv[1])
-	# Second arg is path to write output zip
-	zip_folder_fixed = sys.argv[2][:-4] if sys.argv[2].lower()[-4:] == ".zip" else sys.argv[2]
-	# The folders of the different markers for the assignment
-	comment_folders = [os.path.abspath(folder_path) for folder_path in sys.argv[3:]]
+	# Second arg is path to write output zip (we remove zip portion for uniform behaviour)
+	zip_folder_fixed = sys.argv[2][:-4] if sys.argv[2][-4:].lower() == ".zip" else sys.argv[2]
 	# Ensure mark file exists
-	if not os.path.isfile(mark_file):
+	if not os.path.isfile(sys.argv[1]):
 		print("'{0}' is not a valid file".format(sys.argv[1]))
 		exit(1)
 	# Ensure output file does not exist
-	if os.path.exists(os.path.abspath(zip_folder_fixed)):
-		print("Specified output path {0} already exists".format(sys.argv[2]))
+	if os.path.exists("{0}.zip".format(zip_folder_fixed)):
+		print("Specified output path {0}.zip already exists".format(zip_folder_fixed))
 		exit(1)
-	# Ensure the mark fodlers are valid
-	for idx, path in enumerate(comment_folders):
-		if not os.path.isdir(path):
-			print("'{0}' is not a valid directory".format(sys.argv[idx + 3]))
+	# Ensure the mark folders are valid
+	for comment_folder in sys.argv[3:]:
+		if not os.path.isdir(comment_folder):
+			print("'{0}' is not a valid directory".format(comment_folder))
 			exit(1)
-	with open(mark_file, "r") as grades_in:
+	with open(os.path.abspath(sys.argv[1]), "r") as grades_in:
 		# Preform the merge operation
-		students = merge_grades(grades_in, comment_folders)
+		students = merge_grades(grades_in, [os.path.abspath(comment_folder) for comment_folder in sys.argv[3:]])
 		# Compile the merged grades to a zip that can be uploaded to OWL
 		zip_path, no_submission = create_archive (grades_in, zip_folder_fixed, students)
 		print("Compiled zip archive to be uploaded to OWL saved to:\n    {0}".format(zip_path))
